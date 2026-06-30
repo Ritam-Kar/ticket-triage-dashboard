@@ -63,14 +63,18 @@ reopen_score = (open_df["reopened_count"].fillna(0) * 5).clip(0, 20)   # max 20 
 
 open_df["risk_score"] = (urgency_score + priority_score + reopen_score).clip(0, 100).round(2)
 
-# Risk band buckets
-def risk_band(score):
-    if score >= 75:   return "Critical"
-    elif score >= 50: return "High"
-    elif score >= 25: return "Medium"
-    else:             return "Low"
-
-open_df["risk_band"] = open_df["risk_score"].apply(risk_band)
+# Risk band buckets based on percentile rank:
+# - Critical: top 5% of scores (95th percentile and above)
+# - High: next 15% (80th-95th percentile)
+# - Medium: next 35% (45th-80th percentile)
+# - Low: bottom 45% (below 45th percentile)
+open_df["pct_rank"] = open_df["risk_score"].rank(pct=True)
+open_df["risk_band"] = pd.cut(
+    open_df["pct_rank"],
+    bins=[0.0, 0.45, 0.80, 0.95, 1.0],
+    labels=["Low", "Medium", "High", "Critical"],
+    include_lowest=True
+).astype(str)
 open_df["computed_at"] = pd.Timestamp(NOW)
 
 risk_out = open_df[["ticket_id", "risk_score", "risk_band", "computed_at"]].copy()
