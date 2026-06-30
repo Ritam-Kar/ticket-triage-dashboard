@@ -49,16 +49,17 @@ NOW = datetime.datetime(2026, 7, 1, 0, 0, 0)  # fixed reference matching benchma
 open_df["hours_since_created"] = (NOW - open_df["created_at"]).dt.total_seconds() / 3600
 open_df["sla_target_hours"] = pd.to_numeric(open_df["sla_target_hours"], errors="coerce").fillna(48)
 
-# Component 1: urgency ratio capped at 1 (100% = already breached)
-urgency_ratio = (open_df["hours_since_created"] / open_df["sla_target_hours"]).clip(0, 2)
-urgency_score = (urgency_ratio / 2 * 60).clip(0, 60)   # max 60 pts
+# Component 1: urgency ratio capped at 3x SLA → max 55 pts
+# A ticket at exactly its SLA limit scores 55/3 ≈ 18 pts (not the full 55)
+urgency_ratio = (open_df["hours_since_created"] / open_df["sla_target_hours"]).clip(0, 3)
+urgency_score = (urgency_ratio / 3 * 55).clip(0, 55)   # max 55 pts
 
-# Component 2: priority weight (P1=30, P2=20, P3=10, P4=5)
-priority_map = {"P1": 30, "P2": 20, "P3": 10, "P4": 5}
-priority_score = open_df["priority"].map(priority_map).fillna(5)   # max 30 pts
+# Component 2: priority weight — reduced to avoid double-penalising recent P1s
+priority_map = {"P1": 25, "P2": 15, "P3": 8, "P4": 3}
+priority_score = open_df["priority"].map(priority_map).fillna(3)   # max 25 pts
 
-# Component 3: reopened_count (each reopen = +2, capped at 10 pts)
-reopen_score = (open_df["reopened_count"].fillna(0) * 2).clip(0, 10)   # max 10 pts
+# Component 3: reopened_count — increased weight (each reopen = +5, capped at 20 pts)
+reopen_score = (open_df["reopened_count"].fillna(0) * 5).clip(0, 20)   # max 20 pts
 
 open_df["risk_score"] = (urgency_score + priority_score + reopen_score).clip(0, 100).round(2)
 
