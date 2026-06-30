@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 import uuid
 
 # ---------- CONFIG ----------
-N_ROWS = 1_500_000
+N_ROWS = 5_000_000
 START_DATE = datetime(2025, 7, 1)
 END_DATE = datetime(2026, 6, 30)
 SEED = 42
@@ -74,7 +74,7 @@ def generate():
     n = N_ROWS
     print(f"Generating {n:,} synthetic tickets...")
 
-    created_at = random_timestamps(n, START_DATE, END_DATE).floor("s")
+    created_at = random_timestamps(n, START_DATE, END_DATE)
     category = rng.choice(CATEGORIES, size=n, p=CATEGORY_WEIGHTS)
     priority = rng.choice(PRIORITIES, size=n, p=PRIORITY_WEIGHTS)
     team = rng.choice(TEAMS, size=n, p=TEAM_WEIGHTS)
@@ -94,7 +94,7 @@ def generate():
     # ~12% of tickets still open (not yet resolved)
     still_open_mask = rng.random(n) < 0.12
     resolved_at = created_at + pd.to_timedelta(resolution_hours, unit="h")
-    resolved_at = pd.Series(resolved_at).dt.floor("s")
+    resolved_at = pd.Series(resolved_at)
     resolved_at[still_open_mask] = pd.NaT
 
     status = np.where(
@@ -119,7 +119,7 @@ def generate():
         "assignee_id": [f"AGT-{a}" for a in assignee_id],
         "customer_tier": customer_tier,
         "status": status,
-        "sla_target_hours": sla_target_hours.astype(float),
+        "sla_target_hours": sla_target_hours,
         "first_response_minutes": first_response_minutes.round(1),
         "reopened_count": reopened_count,
     })
@@ -130,6 +130,11 @@ def generate():
     half = n_messy // 2
     df.loc[messy_idx[:half], "first_response_minutes"] = np.nan
     df.loc[messy_idx[half:], "customer_tier"] = None
+
+    # Floor timestamps to seconds to avoid precision issues
+    df["created_at"] = df["created_at"].dt.floor("s")
+    df["resolved_at"] = df["resolved_at"].dt.floor("s")
+    df["sla_target_hours"] = df["sla_target_hours"].astype(float)
 
     print("Done. Sample:")
     print(df.head())
