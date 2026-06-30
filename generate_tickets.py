@@ -91,8 +91,17 @@ def generate():
         [base_resolution_hours[p] for p in priority]
     ) * resolution_noise
 
-    # ~12% of tickets still open (not yet resolved)
-    still_open_mask = rng.random(n) < 0.12
+    # ~12% of tickets still open (not yet resolved) -- but weighted so that
+    # OPEN tickets skew toward RECENT creation dates (realistic: ancient
+    # tickets that are still "Open" after months are a data smell; in
+    # reality they'd be auto-closed/escalated/abandoned). We use an
+    # exponential decay on days-since-created so that being open becomes
+    # rapidly less likely the older a ticket is.
+    days_since_created = (END_DATE - pd.Series(created_at)).dt.days.to_numpy()
+    DECAY_SCALE_DAYS = 35
+    open_probability = 1.0 * np.exp(-days_since_created / DECAY_SCALE_DAYS)
+    open_probability = open_probability.clip(0.01, 1.0)
+    still_open_mask = rng.random(n) < open_probability
     resolved_at = created_at + pd.to_timedelta(resolution_hours, unit="h")
     resolved_at = pd.Series(resolved_at)
     resolved_at[still_open_mask] = pd.NaT
@@ -131,9 +140,10 @@ def generate():
     df.loc[messy_idx[:half], "first_response_minutes"] = np.nan
     df.loc[messy_idx[half:], "customer_tier"] = None
 
-    # Floor timestamps to seconds to avoid precision issues
-    df["created_at"] = df["created_at"].dt.floor("s")
-    df["resolved_at"] = df["resolved_at"].dt.floor("s")
+    # Floor timestamps to microseconds and cast sla_target_hours to float
+    # so BigQuery receives clean TIMESTAMP / FLOAT64 types (not int64 nanoseconds)
+    df["created_at"] = df["created_at"].dt.floor("us")
+    df["resolved_at"] = df["resolved_at"].dt.floor("us")
     df["sla_target_hours"] = df["sla_target_hours"].astype(float)
 
     print("Done. Sample:")

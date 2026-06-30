@@ -1,3 +1,3 @@
 method,wall_clock_seconds,speedup_factor
-CPU (pandas),6.300483088,1.0
-GPU (cudf.pandas),3.57819166,1.760800898
+CPU (pandas),6.279706861,1.0
+GPU (cudf.pandas),3.605278782,1.741808953
