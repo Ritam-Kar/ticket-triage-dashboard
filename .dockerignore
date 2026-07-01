@@ -1,0 +1,11 @@
+.git
+.gitignore
+.DS_Store
+__pycache__/
+*.parquet
+*.csv
+.gemini/
+.agents/
+walkthrough.md
+task.md
+implementation_plan.md
