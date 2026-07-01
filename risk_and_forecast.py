@@ -77,7 +77,7 @@ open_df["risk_band"] = pd.cut(
 ).astype(str)
 open_df["computed_at"] = pd.Timestamp(NOW)
 
-risk_out = open_df[["ticket_id", "risk_score", "risk_band", "computed_at"]].copy()
+risk_out = open_df[["ticket_id", "team", "category", "priority", "risk_score", "risk_band", "computed_at"]].copy()
 risk_out.to_parquet("ticket_risk_scores.parquet", index=False)
 print(risk_out["risk_band"].value_counts().to_string())
 print(f"\nSample risk scores:\n{risk_out.head(10).to_string(index=False)}")
@@ -153,6 +153,9 @@ def bq_load(df, table_id, schema):
 print("\n--- Loading ticket_risk_scores into BigQuery ---")
 risk_schema = [
     bigquery.SchemaField("ticket_id",   "STRING"),
+    bigquery.SchemaField("team",        "STRING"),
+    bigquery.SchemaField("category",    "STRING"),
+    bigquery.SchemaField("priority",    "STRING"),
     bigquery.SchemaField("risk_score",  "FLOAT64"),
     bigquery.SchemaField("risk_band",   "STRING"),
     bigquery.SchemaField("computed_at", "TIMESTAMP"),
