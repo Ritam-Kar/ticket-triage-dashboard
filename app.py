@@ -145,7 +145,7 @@ with tab_overview:
     st.markdown("Comparing feature engineering execution times on 5,000,000 records using standard **CPU Pandas** vs **GPU cuDF** (RAPIDS-accelerated Pandas):")
     
     # KPI Grid
-    kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
+    kpi_col1, kpi_col2 = st.columns(2)
     with kpi_col1:
         st.markdown("""
         <div class="kpi-card">
@@ -158,14 +158,6 @@ with tab_overview:
         <div class="kpi-card">
             <div class="kpi-val" style="color: #A78BFA;">3.61s</div>
             <div class="kpi-label">cuDF GPU Execution</div>
-        </div>
-        """, unsafe_allow_html=True)
-    with kpi_col3:
-        st.markdown("""
-        <div class="kpi-card">
-            <div class="kpi-val" style="color: #10B981;">1.74x</div>
-            <div class="kpi-label">Speedup Factor</div>
-            <div class="speedup-badge">RAPIDS ACCELERATED</div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -195,21 +187,28 @@ with tab_overview:
         
     with col_chart2:
         fig_gauge = go.Figure(go.Indicator(
-            mode = "gauge+number",
+            mode = "gauge+number+delta",
             value = 1.74,
+            delta = {'reference': 1.0, 'position': "top", 'relative': True, 'valueformat': ".1%"},
             domain = {'x': [0, 1], 'y': [0, 1]},
-            title = {'text': "Pipeline Speedup Factor", 'font': {'size': 18, 'color': '#ffffff'}},
-            number = {'suffix': "x", 'font': {'size': 40, 'color': '#10B981'}},
+            title = {'text': "Pipeline Speedup Factor", 'font': {'size': 20, 'color': '#ffffff', 'family': 'Outfit'}},
+            number = {'suffix': "x", 'font': {'size': 50, 'color': '#10B981', 'family': 'Outfit'}},
             gauge = {
-                'axis': {'range': [0, 3], 'tickwidth': 1, 'tickcolor': "#ffffff"},
-                'bar': {'color': "#8b5cf6"},
-                'bgcolor': "rgba(255,255,255,0.05)",
+                'axis': {
+                    'range': [0.5, 2.5], 
+                    'tickwidth': 2, 
+                    'tickcolor': "#8892B0",
+                    'tickvals': [0.5, 1.0, 1.5, 2.0, 2.5],
+                    'ticktext': ["0.5x", "1.0x (CPU)", "1.5x", "2.0x", "2.5x"]
+                },
+                'bar': {'color': "#8b5cf6", 'thickness': 0.6},
+                'bgcolor': "rgba(255,255,255,0.03)",
                 'borderwidth': 2,
                 'bordercolor': "rgba(255,255,255,0.1)",
                 'steps': [
-                    {'range': [0, 1.0], 'color': 'rgba(239, 68, 68, 0.2)'},
-                    {'range': [1.0, 2.0], 'color': 'rgba(245, 158, 11, 0.2)'},
-                    {'range': [2.0, 3.0], 'color': 'rgba(16, 185, 129, 0.2)'}
+                    {'range': [0.5, 1.0], 'color': 'rgba(239, 68, 68, 0.15)'},
+                    {'range': [1.0, 1.5], 'color': 'rgba(245, 158, 11, 0.15)'},
+                    {'range': [1.5, 2.5], 'color': 'rgba(16, 185, 129, 0.2)'}
                 ],
                 'threshold': {
                     'line': {'color': "#10B981", 'width': 4},
