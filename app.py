@@ -42,40 +42,48 @@ st.markdown("""
     .kpi-card {
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 1.5rem;
+        border-radius: 16px;
+        padding: 2.5rem 1.5rem;
         text-align: center;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-        transition: transform 0.3s ease;
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.3);
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 240px; /* Enforces equal height */
+        height: 100%;
     }
     
     .kpi-card:hover {
-        transform: translateY(-5px);
-        border-color: rgba(133, 45, 244, 0.4);
+        transform: translateY(-8px);
+        border-color: rgba(133, 45, 244, 0.6);
+        box-shadow: 0 8px 30px rgba(133, 45, 244, 0.2);
     }
     
     .kpi-val {
-        font-size: 2.2rem;
+        font-size: 3.5rem;
         font-weight: 700;
         color: #ffffff;
+        margin-bottom: 0.5rem;
     }
     
     .kpi-label {
-        font-size: 0.9rem;
+        font-size: 1rem;
         color: #8892B0;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 1.5px;
         margin-top: 0.5rem;
     }
     
     .speedup-badge {
         background: linear-gradient(135deg, #10B981, #059669);
         color: white;
-        padding: 0.2rem 0.6rem;
+        padding: 0.3rem 0.8rem;
         border-radius: 20px;
-        font-size: 0.8rem;
+        font-size: 0.85rem;
         font-weight: 600;
-        margin-top: 0.5rem;
+        margin-top: 1rem;
         display: inline-block;
     }
 </style>
@@ -163,24 +171,61 @@ with tab_overview:
         
     st.write("")
     
-    # Benchmark Chart
-    fig_bench = go.Figure()
-    fig_bench.add_trace(go.Bar(
-        x=["Pandas (CPU)", "cuDF (GPU)"],
-        y=[6.2797, 3.6053],
-        marker_color=["#ef4444", "#8b5cf6"],
-        text=["6.28 seconds", "3.61 seconds"],
-        textposition="auto",
-        width=0.4
-    ))
-    fig_bench.update_layout(
-        title="Processing Time: Pandas (CPU) vs cuDF (GPU)",
-        yaxis_title="Execution Time (seconds)",
-        template="plotly_dark",
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)"
-    )
-    st.plotly_chart(fig_bench, use_container_width=True)
+    # Benchmark Chart and Gauge Chart side-by-side
+    col_chart1, col_chart2 = st.columns(2)
+    with col_chart1:
+        fig_bench = go.Figure()
+        fig_bench.add_trace(go.Bar(
+            x=["Pandas (CPU)", "cuDF (GPU)"],
+            y=[6.2797, 3.6053],
+            marker_color=["#ef4444", "#8b5cf6"],
+            text=["6.28s", "3.61s"],
+            textposition="auto",
+            width=0.4
+        ))
+        fig_bench.update_layout(
+            title="Processing Time Comparison",
+            yaxis_title="Execution Time (seconds)",
+            template="plotly_dark",
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            height=380
+        )
+        st.plotly_chart(fig_bench, use_container_width=True)
+        
+    with col_chart2:
+        fig_gauge = go.Figure(go.Indicator(
+            mode = "gauge+number",
+            value = 1.74,
+            domain = {'x': [0, 1], 'y': [0, 1]},
+            title = {'text': "Pipeline Speedup Factor", 'font': {'size': 18, 'color': '#ffffff'}},
+            number = {'suffix': "x", 'font': {'size': 40, 'color': '#10B981'}},
+            gauge = {
+                'axis': {'range': [0, 3], 'tickwidth': 1, 'tickcolor': "#ffffff"},
+                'bar': {'color': "#8b5cf6"},
+                'bgcolor': "rgba(255,255,255,0.05)",
+                'borderwidth': 2,
+                'bordercolor': "rgba(255,255,255,0.1)",
+                'steps': [
+                    {'range': [0, 1.0], 'color': 'rgba(239, 68, 68, 0.2)'},
+                    {'range': [1.0, 2.0], 'color': 'rgba(245, 158, 11, 0.2)'},
+                    {'range': [2.0, 3.0], 'color': 'rgba(16, 185, 129, 0.2)'}
+                ],
+                'threshold': {
+                    'line': {'color': "#10B981", 'width': 4},
+                    'thickness': 0.75,
+                    'value': 1.74
+                }
+            }
+        ))
+        fig_gauge.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font={'color': "#ffffff", 'family': "Outfit"},
+            height=380,
+            margin=dict(t=80, b=40, l=40, r=40)
+        )
+        st.plotly_chart(fig_gauge, use_container_width=True)
 
 # ---------------------------------------------------------------------------
 # TAB 2: LIVE RISK-RANKED TICKETS
